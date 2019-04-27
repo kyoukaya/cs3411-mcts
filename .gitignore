@@ -1,0 +1,5 @@
+.vscode
+*.o
+agent
+servt
+randt
