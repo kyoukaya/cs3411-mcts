@@ -4,7 +4,9 @@
 #include <stdint.h>
 
 #define INITIAL_ITER 100000
-#define MAXITER 3000000
+#define MAXITER 2000000
+// In seconds
+#define TARGET_TURN_TIME 3.5
 
 #define EMPTY_SQUARE 0
 #define CIRCLE_PLAYER 1

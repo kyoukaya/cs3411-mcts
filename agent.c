@@ -97,7 +97,7 @@ int agent_second_move(int board_num, int prev_move) {
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
                                      (fin.tv_usec - start.tv_usec) / 1000;
     double bench = (double)INITIAL_ITER / (double)move_msec;
-    benchmarkedIters = bench * 5 * 1000;
+    benchmarkedIters = bench * TARGET_TURN_TIME * 1000;
     printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
 
     stateDoMove(state, ourMove);
@@ -122,7 +122,7 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
                                      (fin.tv_usec - start.tv_usec) / 1000;
     double bench = (double)INITIAL_ITER / (double)move_msec;
-    benchmarkedIters = bench * 5 * 1000;
+    benchmarkedIters = bench * TARGET_TURN_TIME * 1000;
     printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
 
     stateDoMove(state, ourMove);
@@ -150,8 +150,8 @@ int agent_next_move(int prev_move) {
 
     // Don't want to increase iters too much towards endgame since game is
     // pretty much decided and turns are blazing fast.
-    if ((bench * 5 * 1000) < MAXITER) {
-        benchmarkedIters = bench * 5 * 1000;
+    if ((bench * TARGET_TURN_TIME * 1000) < MAXITER) {
+        benchmarkedIters = bench * TARGET_TURN_TIME * 1000;
     } else {
         benchmarkedIters = MAXITER;
     }
