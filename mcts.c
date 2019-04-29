@@ -89,7 +89,9 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     // return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
     if (verbose) {
-        printf("T:%d ", moveNo);
+        gettimeofday(&curtime, NULL);
+        uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
+        printf("[%u]T:%d ", curMs, moveNo);
         for (int n = 0; n < SUBBOARD_SIZE && root->children[n] != NULL; n++) {
             fprintf(stderr, "%.2lf ",root->children[n]->wins / root->children[n]->visits);
         }
