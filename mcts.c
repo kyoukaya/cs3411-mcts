@@ -100,6 +100,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs, double *confidence
                highestNode->wins, highestNode->visits,
                highestNode->wins / highestNode->visits, i);
     }
+    *confidence = highestNode->wins / highestNode->visits;
     int ourMove = highestNode->move;
     freeTree(root);
     return ourMove;
