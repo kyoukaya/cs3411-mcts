@@ -117,7 +117,6 @@ int agent_second_move(int board_num, int prev_move) {
     state = initState(board_num, prev_move, -1);
 
     gettimeofday(&start, NULL);
-    double local_conf;
     int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
     gettimeofday(&fin, NULL);
 
@@ -165,7 +164,6 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
 int agent_next_move(int prev_move) {
     struct timeval start, fin;
     moveNo += 2;
-    double local_conf = 0.5;
     // Internal state is represented starting from index 0.
     --prev_move;
     stateDoMove(state, prev_move);

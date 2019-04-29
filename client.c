@@ -129,6 +129,7 @@ int tcpopen() {
  */
 int get_cause(char *buf) {
     int cause = TRIPLE;
+    (void)buf;
     if (strcmp(client_buf, "triple).") == 0) {
         cause = TRIPLE;
     } else if (strcmp(client_buf, "timeout).") == 0) {
