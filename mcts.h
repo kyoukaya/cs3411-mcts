@@ -11,6 +11,7 @@
 #define MAX_TARGET_TURN_TIME 4200
 #define FIRST_TURN_TIME 1000
 #define FAST_TARGET_TURN_TIME 2000
+#define END_GAME_TURN_TIME 1000
 
 #define EMPTY_SQUARE 0
 #define CIRCLE_PLAYER 1
@@ -73,7 +74,7 @@ typedef struct _mctsNode {
     uint32_t visits;
 } Node;
 
-int run_mcts(State *state, Move lastMove, uint32_t maxIter);
+int run_mcts(State *rootState, Move lastMove, uint32_t maxMs, double *confidence);
 
 Node *newNode(State *state, Move move, Node *parent);
 // Use the UCB1 formula to select a child node.

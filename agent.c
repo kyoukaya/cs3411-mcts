@@ -21,6 +21,9 @@
  * With some testing with the help of a python script, I'd come to realize that the MCTS
  * isn't able to reliably come up with good moves in the early game, and that lookt, the
  * primary means of comparison, plays fairly fast in the first few turns as well.
+ * 
+ * Testing against lookt -d 16 on my PC nets my AI a 55% win-rate with a 4s think time!
+ * Win-rate will probably be lower on CSE servers due to lower CPU speed and time constraints ):
  */
 
 #include <stdio.h>
@@ -44,6 +47,7 @@ uint32_t totalMs = 0;
 int firstMove[2];
 int verbose = FALSE;
 uint32_t targetTurnTime = FAST_TARGET_TURN_TIME;
+double confidence;
 
 /*********************************************************/ /*
     Print usage information and exit
@@ -114,7 +118,7 @@ int agent_second_move(int board_num, int prev_move) {
     state = initState(board_num, prev_move, -1);
 
     gettimeofday(&start, NULL);
-    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
+    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME, &confidence);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
@@ -143,7 +147,7 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
     firstMove[1] = first_move + 1;
 
     gettimeofday(&start, NULL);
-    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
+    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME, &confidence);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
@@ -171,8 +175,13 @@ int agent_next_move(int prev_move) {
         targetTurnTime = MAX_TARGET_TURN_TIME;
     }
 
+    // If we're quite sure that we're going to lose/win...
+    if (confidence > 0.8 || confidence < 0.3) {
+        targetTurnTime = END_GAME_TURN_TIME;
+    }
+
     gettimeofday(&start, NULL);
-    int ourMove = run_mcts(state, prev_move, targetTurnTime);
+    int ourMove = run_mcts(state, prev_move, targetTurnTime, &confidence);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
