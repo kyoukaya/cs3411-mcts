@@ -4,7 +4,7 @@
 #  Alan Blair, CSE, UNSW
 
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -O3 -g
+CFLAGS = -Wall -Wextra -pedantic -O5 -g
 
 default: agent
 
