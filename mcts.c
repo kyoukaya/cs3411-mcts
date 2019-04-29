@@ -19,7 +19,7 @@ double ucb_const;
 double confidence = 0.5;
 
 static void freeTree(Node *node) {
-    for (int i = 0; i < SUBBOARD_SIZE && node->children[i] != NULL; i++) {
+    for (int i = 0; i < BOARD_SIZE && node->children[i] != NULL; i++) {
         freeTree(node->children[i]);
     }
     free(node);
@@ -30,7 +30,7 @@ static Node *mostVisitedChild(Node *node) {
     uint32_t highestVisited = 0;
     uint32_t i;
 
-    for (i = 0; node->children[i] != NULL && i < SUBBOARD_SIZE; i++) {
+    for (i = 0; node->children[i] != NULL && i < BOARD_SIZE; i++) {
         if (node->children[i]->visits > highestVisited) {
             highestVisited = node->children[i]->visits;
             highestNode = node->children[i];
@@ -100,7 +100,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
         gettimeofday(&curtime, NULL);
         uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
         fprintf(stderr, "[%u]T:%d ", curMs, moveNo);
-        for (int n = 0; n < SUBBOARD_SIZE && root->children[n] != NULL; n++) {
+        for (int n = 0; n < BOARD_SIZE && root->children[n] != NULL; n++) {
             fprintf(stderr, "%.2lf ",root->children[n]->wins / root->children[n]->visits);
         }
         fprintf(stderr, "\n");
@@ -135,20 +135,22 @@ State *initState(int board, int prev_move, int first_move) {
 void stateDoMove(State *state, Move move) {
     uint32_t moveMaker = 3 - state->playerLastMoved;
     int prevBoard = state->subBoard;
-    state->board[state->subBoard] |= moveMaker == CIRCLE_PLAYER
-                                         ? CIRCLE_PLAYER_START << move
-                                         : CROSS_PLAYER_START << move;
+    // (CIRCLE_PLAYER_START << 9 * (moveMaker - 1)) << move;
+    // state->board[state->subBoard] |= moveMaker == CIRCLE_PLAYER
+    //                                      ? CIRCLE_PLAYER_START << move
+    //                                      : CROSS_PLAYER_START << move;
+    state->board[state->subBoard] |= (CIRCLE_PLAYER_START << 9 * (moveMaker - 1)) << move;
     state->subBoard = move;
     state->playerLastMoved = moveMaker;
     state->gameStatus = stateResult(state, moveMaker, prevBoard);
 }
 
-void stateGetMoves(State *state, Move moves[SUBBOARD_SIZE],
+void stateGetMoves(State *state, Move moves[BOARD_SIZE],
                    uint32_t *numMoves) {
     uint32_t subBoard = state->board[state->subBoard];
     uint32_t mask = CIRCLE_PLAYER_START + CROSS_PLAYER_START;
     int n = 0;
-    for (int i = 0; i < SUBBOARD_SIZE; i++) {
+    for (int i = 0; i < BOARD_SIZE; i++) {
         // If Circle or Cross doesn't have a move in that square...
         if (!(subBoard & mask)) {
             moves[n] = i;
@@ -161,7 +163,7 @@ void stateGetMoves(State *state, Move moves[SUBBOARD_SIZE],
 
 void statePlayout(State *state) {
     uint32_t nMoves;
-    Move moves[SUBBOARD_SIZE];
+    Move moves[BOARD_SIZE];
     while (state->gameStatus == GAME_NOT_TERMINAL) {
         stateGetMoves(state, moves, &nMoves);
         stateDoMove(state, moves[rand() % nMoves]);
@@ -170,6 +172,7 @@ void statePlayout(State *state) {
 
 // EVIL BIT LEVEL OPTIMIZATION.
 static int isBoardFull(uint32_t board) {
+    // Optimize for as little branching as possible.
     uint32_t circles = board & ALL_CIRCLES_MASK;
     uint32_t crosses = (board & ALL_CROSSES_MASK) >> 9;
     return (circles | crosses) == ALL_CIRCLES_MASK;
@@ -177,6 +180,8 @@ static int isBoardFull(uint32_t board) {
 
 // EVIL BIT LEVEL OPTIMIZATION BUT WORSE.
 static int isGameWon(uint32_t board, uint32_t p) {
+    // Alternatively a tree like approach to this, checking squares 0,4,8,
+    // could be more efficient as the worst case branching would be lesser.
     --p;
     board = board >> (9 * p);
     return ((board & ROW0) == ROW0 || (board & ROW1) == ROW1 ||
@@ -195,7 +200,7 @@ double stateResult(State *state, int player, int prevBoard) {
     } else if (isGameWon(subBoard, 3 - player)) {
         return GAME_LOST;
     }
-    // Non terminal state.
+
     return GAME_NOT_TERMINAL;
 }
 
@@ -216,9 +221,8 @@ Node *nodeSelectChild(Node *node) {
     double curUCT;
     double bestUCT = -INFINITY;
     double x = 0.25 * log((double)node->visits);
-    // Profile has revealed this code to be extremely performance sensitive, but not
-    // much can be optimized unfortunately!
-    for (int i = 0; node->children[i] != NULL && i < SUBBOARD_SIZE; i++) {
+
+    for (int i = 0; node->children[i] != NULL && i < BOARD_SIZE; i++) {
         Node *curChild = node->children[i];
         curUCT = curChild->wins / (double)curChild->visits;
         curUCT += sqrt(x / (double)curChild->visits);
@@ -237,7 +241,7 @@ Node *nodeAddChild(Node *parent, Move move, State *state) {
     uint32_t i;
     for (i = 0; i < parent->nUntriedMoves; i++) {
         if (parent->untriedMoves[i] == move) {
-            // shift the rest of the array left.
+            // Shift the rest of the array left.
             for (; i < (parent->nUntriedMoves - 1); i++) {
                 parent->untriedMoves[i] = parent->untriedMoves[i + 1];
             }
@@ -246,7 +250,7 @@ Node *nodeAddChild(Node *parent, Move move, State *state) {
     }
     parent->nUntriedMoves--;
     // Add child into parent node.
-    for (i = 0; i < SUBBOARD_SIZE; i++) {
+    for (i = 0; i < BOARD_SIZE; i++) {
         if (parent->children[i] == NULL) {
             parent->children[i] = childNode;
             break;
@@ -263,10 +267,10 @@ void nodeUpdate(Node *node, double result) {
 void printBoard(State *state) {
     int board[10][10];
     int i, j;
-    for (i = 0; i < SUBBOARD_SIZE; i++) {
+    for (i = 0; i < BOARD_SIZE; i++) {
         uint32_t c_mask = CIRCLE_PLAYER_START;
         uint32_t x_mask = CROSS_PLAYER_START;
-        for (j = 0; j < SUBBOARD_SIZE; j++) {
+        for (j = 0; j < BOARD_SIZE; j++) {
             if (state->board[i] & c_mask) {
                 board[i + 1][j + 1] = 1;
             } else if (state->board[i] & x_mask) {

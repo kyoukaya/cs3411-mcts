@@ -7,18 +7,19 @@
 // pretty much decided at this point.
 #define MAXITER 2000000
 
-// In ms
+// Time controls in ms.
+// Maximum turn time, used in the mid-game.
 #define MAX_TARGET_TURN_TIME 4200
+// Early game time controls.
 #define FIRST_TURN_TIME 1000
 #define FAST_TARGET_TURN_TIME 2000
+// Victory or defeat should be obvious at this point.
 #define END_GAME_TURN_TIME 1500
 
 #define EMPTY_SQUARE 0
 #define CIRCLE_PLAYER 1
 #define CROSS_PLAYER 2
-
-#define SUBBOARD_SIZE 9
-
+#define BOARD_SIZE 9
 #define GAME_NOT_TERMINAL -1.0
 #define GAME_LOST 0
 #define GAME_WON 1
@@ -49,14 +50,13 @@ typedef struct state {
     double gameStatus;
     // CIRCLE_PLAYER/CROSS_PLAYER
     int opponent;
-    // CIRCLE_PLAYER/CROSS_PLAYER
     int me;
     int playerLastMoved;
     // Which sub-board the game is currently on.
     int subBoard;
     /* Each subboard is divided into 2 9 bit sections
      * Starting with the least 9 bits for Circle and then the nex 9 for Cross. */
-    uint32_t board[SUBBOARD_SIZE];
+    uint32_t board[BOARD_SIZE];
 } State;
 
 typedef struct _mctsNode {
@@ -65,16 +65,15 @@ typedef struct _mctsNode {
     // The move that got us to this node.
     Move move;
     int playerLastMoved;
-    struct _mctsNode *children[SUBBOARD_SIZE];
-    /* Not NULL terminated, iterate with nUntriedMoves */
-    Move untriedMoves[SUBBOARD_SIZE];
+    struct _mctsNode *children[BOARD_SIZE];
+    Move untriedMoves[BOARD_SIZE];
     // Required to pick a random move.
     uint32_t nUntriedMoves;
     double wins;
     uint32_t visits;
 } Node;
 
-// Returns move
+// Returns move [0..8]
 int run_mcts(State *rootState, Move lastMove, uint32_t maxMs);
 
 Node *newNode(State *state, Move move, Node *parent);
@@ -92,7 +91,7 @@ void nodeUpdate(Node *node, double result);
 
 State *initState(int board, int prev_move, int first_move);
 void stateDoMove(State *state, Move move);
-void stateGetMoves(State *state, Move moves[SUBBOARD_SIZE], uint32_t *numMoves);
+void stateGetMoves(State *state, Move moves[BOARD_SIZE], uint32_t *numMoves);
 void statePlayout(State *state);
 double stateResult(State *state, int player, int prevBoard);
 
