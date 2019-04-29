@@ -7,7 +7,6 @@
 extern int   port;
 extern char *host;
 extern double ucb_const;
-extern uint32_t targetTurnTime;
 extern int verbose;
 extern int moveNo;
 
