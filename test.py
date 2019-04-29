@@ -62,7 +62,7 @@ async def game(port, lookt_depth, first, exp_c, pbar, start_moves):
     stdout, stderr = await proc.communicate()
 
     if (stderr):
-        pbar.update(stderr.decode())
+        pbar.write(stderr.decode())
 
     return stdout.decode(), servstdout.decode()
 
