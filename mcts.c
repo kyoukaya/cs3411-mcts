@@ -89,6 +89,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     // return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
     if (verbose) {
+        printf("T:%d ", moveNo);
         for (int n; n < SUBBOARD_SIZE && root->children[n] != NULL; n++) {
             fprintf(stderr, "%.2lf ",root->children[n]->wins / root->children[n]->visits);
         }
