@@ -18,6 +18,8 @@ void whiteBoxTests(void);
 double ucb_const;
 double confidence = 0.5;
 
+// Could possibly free the tree during the opponent's turn to save a small amount
+// of time.
 static void freeTree(Node *node) {
     for (int i = 0; i < BOARD_SIZE && node->children[i] != NULL; i++) {
         freeTree(node->children[i]);
@@ -45,7 +47,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     Node *root = newNode(rootState, lastMove, NULL);
     State *state = calloc(1, sizeof(State));
 
-    // If we're quite sure that we're going to lose/win...
+    // If we're quite sure that we're going to lose/win, reduce the turn time.
     if (confidence > 0.8 || confidence < 0.3) {
         maxMs = END_GAME_TURN_TIME;
     }
@@ -53,9 +55,10 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     struct timeval start, curtime;
     gettimeofday(&start, NULL);
 
+    // Start from 1 so we dont immediately do a time check.
     for (i = 1; i < MAXITER; i++) {
-        // Do a time check every 25000 iterations
-        if ((i % 25000) == 0) {            
+        // Do a time check every 25000 iterations.
+        if ((i % 25000) == 0) {
             gettimeofday(&curtime, NULL);
             uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
             if (curMs > maxMs) {
@@ -93,7 +96,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
         }
     }
     free(state);
-    // return the move that was most visited.
+    // Return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
     confidence = highestNode->wins / highestNode->visits;
     if (verbose) {
@@ -115,9 +118,9 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
 
 State *initState(int board, int prev_move, int first_move) {
     State *newState = calloc(1, sizeof(State));
-    // We shouldn't need to init state if the game is already terminal...
     newState->gameStatus = GAME_NOT_TERMINAL;
     newState->subBoard = prev_move;
+
     if (first_move == -1) {
         newState->me = CIRCLE_PLAYER;
         newState->board[board] = CROSS_PLAYER_START << prev_move;
@@ -128,6 +131,7 @@ State *initState(int board, int prev_move, int first_move) {
         newState->board[first_move] |= CIRCLE_PLAYER_START << prev_move;
         newState->playerLastMoved = CIRCLE_PLAYER;
     }
+
     newState->opponent = 3 - newState->me;
     return newState;
 }
@@ -135,7 +139,6 @@ State *initState(int board, int prev_move, int first_move) {
 void stateDoMove(State *state, Move move) {
     uint32_t moveMaker = 3 - state->playerLastMoved;
     int prevBoard = state->subBoard;
-    // (CIRCLE_PLAYER_START << 9 * (moveMaker - 1)) << move;
     // state->board[state->subBoard] |= moveMaker == CIRCLE_PLAYER
     //                                      ? CIRCLE_PLAYER_START << move
     //                                      : CROSS_PLAYER_START << move;

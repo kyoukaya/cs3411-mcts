@@ -22,8 +22,9 @@
  * isn't able to reliably come up with good moves in the early game, and that lookt, the
  * primary means of comparison, plays fairly fast in the first few turns as well.
  * 
- * Testing against lookt -d 16 on my PC nets my AI a 55% win-rate with a 4s think time!
- * Win-rate will probably be lower on CSE servers due to lower CPU speed and time constraints ):
+ * Testing against lookt -d 16 on my PC nets my AI a 55% win-rate within time constraints!
+ * Win-rate will probably be lower on CSE servers due to lower CPU speed as I'm only getting
+ * 1.5-1.7M iterations in the midgame compared to 2M on my own PC.
  */
 
 #include <stdio.h>
