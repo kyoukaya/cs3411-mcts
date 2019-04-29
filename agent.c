@@ -110,6 +110,9 @@ void agent_start(int this_player) {
 int agent_second_move(int board_num, int prev_move) {
     struct timeval start, fin;
     moveNo = 2;
+    firstMove[0] = board_num;
+    firstMove[1] = prev_move;
+
 
     // Internal state is represented starting from index 0.
     --board_num;
@@ -135,15 +138,15 @@ int agent_second_move(int board_num, int prev_move) {
 int agent_third_move(int board_num, int first_move, int prev_move) {
     struct timeval start, fin;
     moveNo = 3;
+    firstMove[0] = board_num;
+    firstMove[1] = first_move;
+
 
     // Internal state is represented starting from index 0.
     --board_num;
     --first_move;
     --prev_move;
     state = initState(board_num, prev_move, first_move);
-
-    firstMove[0] = board_num + 1;
-    firstMove[1] = first_move + 1;
 
     gettimeofday(&start, NULL);
     int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
@@ -203,7 +206,7 @@ void agent_gameover(int result,                             // WIN, LOSS or DRAW
     const char resultMap[3] = {'W', 'L', 'D'}; 
     const char meMap[2] = {'O', 'X'};
 
-    // ucb_const,result,me,firstmove,turns,time
+    // result,me,firstmove,turns,time
     printf("%c,%c,%d.%d,%d,%u\n",
            resultMap[result - WIN], meMap[state->me - CIRCLE_PLAYER],
            firstMove[0], firstMove[1], moveNo, totalMs);
