@@ -38,6 +38,7 @@ uint32_t totalMs = 0;
 // Boards/squares Indexed from 1.
 int firstMove[2];
 int verbose = FALSE;
+int targetTurnTime = FAST_TARGET_TURN_TIME;
 
 /*********************************************************/ /*
     Print usage information and exit
@@ -138,7 +139,7 @@ int agent_second_move(int board_num, int prev_move) {
                                      (fin.tv_usec - start.tv_usec) / 1000;
     totalMs += move_msec;
     double bench = (double)INITIAL_ITER / (double)move_msec;
-    benchmarkedIters = bench * TARGET_TURN_TIME * 1000;
+    benchmarkedIters = bench * targetTurnTime * 1000;
     if (verbose)
         printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
     
@@ -169,7 +170,7 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
                                      (fin.tv_usec - start.tv_usec) / 1000;
     totalMs += move_msec;
     double bench = (double)INITIAL_ITER / (double)move_msec;
-    benchmarkedIters = bench * TARGET_TURN_TIME * 1000;
+    benchmarkedIters = bench * targetTurnTime * 1000;
     if (verbose)
         printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
 
@@ -186,6 +187,10 @@ int agent_next_move(int prev_move) {
     moveNo += 2;
     stateDoMove(state, prev_move);
 
+    if (moveNo > 7) {
+        targetTurnTime = MAX_TARGET_TURN_TIME;
+    }
+
     gettimeofday(&start, NULL);
     int ourMove = run_mcts(state, prev_move, benchmarkedIters);
     gettimeofday(&fin, NULL);
@@ -200,8 +205,8 @@ int agent_next_move(int prev_move) {
 
     // Don't want to increase iters too much towards endgame since game is
     // pretty much decided and turns are blazing fast.
-    if ((bench * TARGET_TURN_TIME * 1000) < MAXITER) {
-        benchmarkedIters = bench * TARGET_TURN_TIME * 1000;
+    if ((bench * targetTurnTime * 1000) < MAXITER) {
+        benchmarkedIters = bench * targetTurnTime * 1000;
     } else {
         benchmarkedIters = MAXITER;
     }
