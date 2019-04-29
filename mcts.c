@@ -88,10 +88,15 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     free(state);
     // return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
-    if (verbose)
-        printf("Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n", highestNode->move,
+    if (verbose) {
+        for (int n; n < SUBBOARD_SIZE && root->children[n] != NULL; n++) {
+            fprintf(stderr, "%.2lf ",root->children[n]->wins / root->children[n]->visits);
+        }
+        fprintf(stderr, "\n");
+        fprintf(stderr, "Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n", highestNode->move,
                highestNode->wins, highestNode->visits,
                highestNode->wins / highestNode->visits, i);
+    }
     int ourMove = highestNode->move;
     freeTree(root);
     return ourMove;
@@ -263,11 +268,6 @@ void printBoard(State *state) {
         }
     }
     print_board(stdout, board, 0, 0);
-}
-
-void printNode(Node *node) {
-    printf("Mv: %d W/V: %lf/%u(%.2lf)\n", node->move, node->wins, node->visits,
-           node->wins / (double)node->visits);
 }
 
 void whiteBoxTests(void) {

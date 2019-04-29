@@ -94,7 +94,6 @@ void stateGetMoves(State *state, Move moves[SUBBOARD_SIZE], uint32_t *numMoves);
 void statePlayout(State *state);
 double stateResult(State *state, int player, int prevBoard);
 
-void printNode(Node *node);
 // Hacky adapter to provided print_board function.
 void printBoard(State *state);
 

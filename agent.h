@@ -9,6 +9,7 @@ extern char *host;
 extern double ucb_const;
 extern uint32_t targetTurnTime;
 extern int verbose;
+extern int moveNo;
 
  //  parse command-line arguments
 void agent_parse_args( int argc, char *argv[] );

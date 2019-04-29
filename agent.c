@@ -15,7 +15,12 @@
  * 
  * Naturally since MCTS is incredibly computationally reliant, I'd decided to write it
  * in C to best optimize the code I can. Additionally using gprof to profile and optimize
- * the hot code paths, namely; isBoardFull, isGameWon.
+ * the hot code paths, namely; isBoardFull, isGameWon. Ultimately using low level
+ * bitwise optimizations to get the speed required.
+ * 
+ * With some testing with the help of a python script, I'd come to realize that the MCTS
+ * isn't able to reliably come up with good moves in the early game, and that lookt, the
+ * primary means of comparison, plays fairly fast in the first few turns as well.
  */
 
 #include <stdio.h>
