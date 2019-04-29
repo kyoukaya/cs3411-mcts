@@ -4,7 +4,7 @@
 #  Alan Blair, CSE, UNSW
 
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -O3
+CFLAGS = -Wall -Wextra -pedantic -O3 -g
 
 default: agent
 
@@ -14,10 +14,7 @@ agent: agent.o client.o game.o mcts.o common.h agent.h game.h mcts.h
 servt: servt.o game.o common.h game.h agent.h
 	$(CC) $(CFLAGS) -o servt servt.o game.o
 
-randt: randt.o client.o game.o common.h agent.h game.h
-	$(CC) $(CFLAGS) -o randt randt.o client.o game.o
-
-all: servt randt agent
+all: servt agent
 
 %o:%c common.h agent.h mcts.h
 	$(CC) $(CFLAGS) -c $<

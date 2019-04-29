@@ -6,13 +6,15 @@
 
 #include "mcts.h"
 #include "game.h"
+#include "agent.h"
 
 #define TRUE 1
 #define FALSE 0
 
-// Lowest 9 bits
-const uint32_t P1_MASK = 0x1ff;
-const uint32_t P2_MASK = P1_MASK << 9;
+static int isGameWon(uint32_t board, uint32_t p);
+void whiteBoxTests(void);
+
+double ucb_const;
 
 static void freeTree(Node *node) {
     for (int i = 0; i < SUBBOARD_SIZE && node->children[i] != NULL; i++) {
@@ -41,8 +43,6 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxIter) {
     Node *root = newNode(rootState, lastMove, NULL);
     State *state = calloc(1, sizeof(State));
 
-    printf(">>> Running MCTS\n");
-
     for (i = 0; i < maxIter; i++) {
         Node *node = root;
         // Restore original state on each iteration.
@@ -61,7 +61,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxIter) {
             node = nodeAddChild(node, move, state);
         }
 
-        // Rollout
+        // Playout
         statePlayout(state);
 
         // Backpropagate
@@ -77,9 +77,10 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxIter) {
     free(state);
     // return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
-    printf("Decided to play [%d][%d]. iter: %d\n", rootState->subBoard,
-           highestNode->move, i);
-    printNode(highestNode);
+    if (verbose)
+        printf("Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n", highestNode->move,
+               highestNode->wins, highestNode->visits,
+               highestNode->wins / highestNode->visits, i);
     int ourMove = highestNode->move;
     freeTree(root);
     return ourMove;
@@ -187,8 +188,9 @@ Node *nodeSelectChild(Node *node) {
     Node *bestChild = NULL;
     double curUCT;
     double bestUCT = -INFINITY;
-    double x = 2 * log((double)node->visits);
-
+    double x = 0.25 * log((double)node->visits);
+    // Profile has revealed this code to be extremely performance sensitive, but not
+    // much can be optimized unfortunately!
     for (int i = 0; node->children[i] != NULL && i < SUBBOARD_SIZE; i++) {
         Node *curChild = node->children[i];
         curUCT = curChild->wins / (double)curChild->visits;
@@ -257,7 +259,7 @@ void printNode(Node *node) {
            node->wins / (double)node->visits);
 }
 
-void whiteBoxTest(void) {
+void whiteBoxTests(void) {
     State *state = calloc(1, sizeof(State));
     // Testing
     state->board[0] = ROW0;

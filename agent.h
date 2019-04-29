@@ -6,6 +6,8 @@
  */
 extern int   port;
 extern char *host;
+extern double ucb_const;
+extern int verbose;
 
  //  parse command-line arguments
 void agent_parse_args( int argc, char *argv[] );
@@ -29,4 +31,3 @@ void agent_gameover( int result, int cause );
 
  //  called at the end of the series of games
 void agent_cleanup();
-

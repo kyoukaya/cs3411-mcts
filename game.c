@@ -104,6 +104,8 @@ int make_move(
              )
 {
   if( board[move[m-1]][move[m]] != EMPTY ) {
+    printf("ILLEGAL MOVE detected on board %d. Move was %d\n", move[m-1], move[m]);
+    print_board(stdout, board, move[m-2], move[m-1]);
     return( ILLEGAL_MOVE );
   }
   board[move[m-1]][move[m]] = player;
