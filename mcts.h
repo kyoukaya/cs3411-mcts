@@ -16,9 +16,9 @@
 // In the late game, we cap the iterations so we don't spin for too long as the game is
 // pretty much decided at this point.
 #define MAXITER 2000000
-// In seconds
-#define MAX_TARGET_TURN_TIME 4
-#define FAST_TARGET_TURN_TIME 2
+// In ms
+#define MAX_TARGET_TURN_TIME 4000
+#define FAST_TARGET_TURN_TIME 2000
 
 #define EMPTY_SQUARE 0
 #define CIRCLE_PLAYER 1
