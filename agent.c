@@ -31,8 +31,8 @@
 #define MAX_MOVE 81
 
 State *state;
-int moveNo = 0;
-int benchmarkedIters = 0;
+// Turn counter starting from 1
+int moveNo;
 // Time we spent thinking
 uint32_t totalMs = 0;
 // Boards/squares Indexed from 1.
@@ -48,8 +48,6 @@ void usage(char argv0[]) {
     printf("       -v");
     printf("       [-p port]\n");  // tcp port
     printf("       [-h host]\n");  // tcp host
-    // printf("       [-c UCB const]\n");
-    printf("       [-t time(s)]\n");
     exit(1);
 }
 
@@ -71,16 +69,7 @@ void agent_parse_args(int argc, char *argv[]) {
             }
             host = argv[i + 1];
             i += 2;
-        }
-        // else if (strcmp(argv[i], "-c") == 0) {
-        //     if (i + 1 >= argc) {
-        //         usage(argv[0]);
-        //     }
-        //     if (!sscanf(argv[i +1], "%lf", &ucb_const)) {
-        //         usage(argv[0]);
-        //     };
-        //     i += 2;}
-        else if (strcmp(argv[i], "-v") == 0) {
+        } else if (strcmp(argv[i], "-v") == 0) {
             verbose = TRUE;
             ++i;
         } else {
@@ -105,10 +94,6 @@ void agent_init() {
  */
 void agent_start(int this_player) {
     (void)this_player;
-    //   reset_board( board );
-    //   m = 0;
-    //   move[m] = 0;
-    //   player = this_player;
 }
 
 /*********************************************************/ /*
@@ -116,20 +101,12 @@ void agent_start(int this_player) {
  */
 int agent_second_move(int board_num, int prev_move) {
     struct timeval start, fin;
+    moveNo = 2;
 
-    // We are O, adjust UCB_CONST accordingly
-    if (board_num == 5)
-        ucb_const = UCB_CIRCLE5;
-    else 
-        ucb_const = UCB_CIRCLE12;
     // Internal state is represented starting from index 0.
     --board_num;
     --prev_move;
     state = initState(board_num, prev_move, -1);
-    moveNo = 2;
-    // Stored for tuning purposes.
-    firstMove[0] = board_num + 1;
-    firstMove[1] = prev_move + 1;
 
     gettimeofday(&start, NULL);
     int ourMove = run_mcts(state, prev_move, targetTurnTime);
@@ -138,12 +115,9 @@ int agent_second_move(int board_num, int prev_move) {
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
                                      (fin.tv_usec - start.tv_usec) / 1000;
     totalMs += move_msec;
-    double bench = (double)INITIAL_ITER / (double)move_msec;
-    benchmarkedIters = bench * targetTurnTime * 1000;
-    if (verbose)
-        printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
     
     stateDoMove(state, ourMove);
+    // Convert the move back into index 1
     return ourMove + 1;
 }
 
@@ -152,15 +126,16 @@ int agent_second_move(int board_num, int prev_move) {
  */
 int agent_third_move(int board_num, int first_move, int prev_move) {
     struct timeval start, fin;
-    // We are X, adjust UCB_CONST appropriately.
-    ucb_const = UCB_CONST;
+    moveNo = 3;
+
+    // Internal state is represented starting from index 0.
     --board_num;
     --first_move;
     --prev_move;
-    moveNo = 3;
+    state = initState(board_num, prev_move, first_move);
+
     firstMove[0] = board_num + 1;
     firstMove[1] = first_move + 1;
-    state = initState(board_num, prev_move, first_move);
 
     gettimeofday(&start, NULL);
     int ourMove = run_mcts(state, prev_move, targetTurnTime);
@@ -169,12 +144,9 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
                                      (fin.tv_usec - start.tv_usec) / 1000;
     totalMs += move_msec;
-    double bench = (double)INITIAL_ITER / (double)move_msec;
-    benchmarkedIters = bench * targetTurnTime * 1000;
-    if (verbose)
-        printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
 
     stateDoMove(state, ourMove);
+    // Convert the move back into index 1
     return ourMove + 1;
 }
 
@@ -183,10 +155,13 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
  */
 int agent_next_move(int prev_move) {
     struct timeval start, fin;
-    --prev_move;
     moveNo += 2;
+
+    // Internal state is represented starting from index 0.
+    --prev_move;
     stateDoMove(state, prev_move);
 
+    // Take longer turn times during the mid-late game.
     if (moveNo > 9) {
         targetTurnTime = MAX_TARGET_TURN_TIME;
     }
@@ -198,13 +173,10 @@ int agent_next_move(int prev_move) {
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
                                      (fin.tv_usec - start.tv_usec) / 1000;
     totalMs += move_msec;
-    double bench = (double)MAXITER / (double)move_msec;
-
-    if (verbose)
-        printf("trn: %d [%u ms]. %lf iters/ms\n", moveNo, move_msec, bench);
 
     stateDoMove(state, ourMove);
-    return (ourMove + 1);
+    // Convert the move back into index 1
+    return ourMove + 1;
 }
 
 /*********************************************************/ /*
@@ -225,8 +197,8 @@ void agent_gameover(int result,                             // WIN, LOSS or DRAW
     const char meMap[2] = {'O', 'X'};
 
     // ucb_const,result,me,firstmove,turns,time
-    printf("%lf,%c,%c,%d.%d,%d,%u\n",
-           ucb_const, resultMap[result - WIN], meMap[state->me - CIRCLE_PLAYER],
+    printf("%c,%c,%d.%d,%d,%u\n",
+           resultMap[result - WIN], meMap[state->me - CIRCLE_PLAYER],
            firstMove[0], firstMove[1], moveNo, totalMs);
     free(state);
     (void)cause;
