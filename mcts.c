@@ -39,7 +39,7 @@ static Node *mostVisitedChild(Node *node) {
     return highestNode;
 }
 
-int run_mcts(State *rootState, Move lastMove, uint32_t maxMs, double *confidence) {
+double run_mcts(State *rootState, Move lastMove, uint32_t maxMs, int *ourMove) {
     uint32_t i;
     Node *root = newNode(rootState, lastMove, NULL);
     State *state = calloc(1, sizeof(State));
@@ -101,10 +101,9 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs, double *confidence
                highestNode->wins, highestNode->visits,
                conf, i);
     }
-    *confidence = conf;
-    int ourMove = highestNode->move;
+    *ourMove = highestNode->move;
     freeTree(root);
-    return ourMove;
+    return conf;
 }
 
 State *initState(int board, int prev_move, int first_move) {
