@@ -38,7 +38,7 @@ uint32_t totalMs = 0;
 // Boards/squares Indexed from 1.
 int firstMove[2];
 int verbose = FALSE;
-int targetTurnTime = FAST_TARGET_TURN_TIME;
+uint32_t targetTurnTime = FAST_TARGET_TURN_TIME;
 
 /*********************************************************/ /*
     Print usage information and exit
