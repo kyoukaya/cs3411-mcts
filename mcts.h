@@ -2,23 +2,15 @@
 #define __MCTS_H__
 
 #include <stdint.h>
-// Default value UCB exploration param. sqrt(2)
-#define UCB_CONST 1.41421
-// sqrt(0.4) seems to be the best for Circle games with a ~20% WR
-// As circle, we are most likely to win if the first move board 1/2 (symmetry applies)
-// and least likely to win if the first move is on board 5.
-#define UCB_CIRCLE12 0.632455
-#define UCB_CIRCLE5 1.09545
 
-// Amount of iterations use to run the first turn, mostly used for benchmarking as
-// it's highly unlikely for a good strategy to emerge in the early game.
-#define INITIAL_ITER 1000000
 // In the late game, we cap the iterations so we don't spin for too long as the game is
 // pretty much decided at this point.
 #define MAXITER 2000000
+
 // In ms
-#define MAX_TARGET_TURN_TIME 4000
-#define FAST_TARGET_TURN_TIME 2000
+#define MAX_TARGET_TURN_TIME 4200
+#define FIRST_TURN_TIME 1000
+#define FAST_TARGET_TURN_TIME 1500
 
 #define EMPTY_SQUARE 0
 #define CIRCLE_PLAYER 1
@@ -84,8 +76,10 @@ typedef struct _mctsNode {
 int run_mcts(State *state, Move lastMove, uint32_t maxIter);
 
 Node *newNode(State *state, Move move, Node *parent);
-// Use the UCB1 formula to select a child node. Often a constant UCTK is applied
-// to vary the amount of exploration versus exploitation.
+// Use the UCB1 formula to select a child node.
+// https://homes.di.unimi.it/~cesabian/Pubblicazioni/ml-02.pdf
+// We use the UCB1-tuned algorithm linked above but with min{1/4,Vj(nj)} simplified
+// to 1/4.
 Node *nodeSelectChild(Node *node);
 // Remove m from untriedMoves and add a new child node for this move. Return the
 // added child node

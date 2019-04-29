@@ -109,7 +109,7 @@ int agent_second_move(int board_num, int prev_move) {
     state = initState(board_num, prev_move, -1);
 
     gettimeofday(&start, NULL);
-    int ourMove = run_mcts(state, prev_move, targetTurnTime);
+    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
@@ -138,7 +138,7 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
     firstMove[1] = first_move + 1;
 
     gettimeofday(&start, NULL);
-    int ourMove = run_mcts(state, prev_move, targetTurnTime);
+    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
