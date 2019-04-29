@@ -24,7 +24,7 @@ int   agent_fd[2];
 int  msec_left[2];
 int   is_human[2]={FALSE,FALSE};
 
-// allow 30 seconds initially, plus 2 seconds for each move
+  // allow 30 secons initially, plus 2 seconds for each move
 int seconds_initially = 30;
 int seconds_per_move  =  2;
 
@@ -83,6 +83,7 @@ void server_init( int port )
     perror("error retriving port number");
     exit(1);
   }
+  printf("Connecting to port %d\n", ntohs(servAddr.sin_port));
 
   // server listen
   if(listen(server, 5) != 0) {
@@ -205,7 +206,7 @@ int server_step(
     game_status = TIMEOUT;
   }
   if(( msec_left[player] < 0 )&&( game_status == STILL_PLAYING) ) {
-    printf("Player %d timedout on trn %d with %d\n", player, m, msec_left[player]);
+    game_status = TIMEOUT;
   }
   return( game_status );
 }
@@ -240,7 +241,7 @@ void play_games( int num_games, int move[] )
     player = first_player;
     game_status = make_move( player,m,move,board );
     while( m < MAX_MOVE && game_status == STILL_PLAYING ) {
-      // print_board( stdout,board,move[m-1],move[m] );
+      //print_board( stdout,board,move[m-1],move[m] );
       m++;
       player = !player;
       if( is_human[player] ) {
@@ -254,7 +255,7 @@ void play_games( int num_games, int move[] )
       fprintf(agent_in[!player],"last_move(%d).\n",move[m]);
     }
 
-    // print_board( stdout,board,move[m-1],move[m] );
+    print_board( stdout,board,move[m-1],move[m] );
 
     if( game_status == WIN ) {
       write_agent(  player, "win(triple).\n" );
@@ -263,7 +264,6 @@ void play_games( int num_games, int move[] )
     }
     else if( game_status == DRAW ) {
       write_all("draw(full_board).\n" );
-      print_board( stdout,board,move[m-1],move[m] );
       printf( "draw (full_board)\n" );
     }
     else if( game_status == ILLEGAL_MOVE ) {
@@ -277,6 +277,7 @@ void play_games( int num_games, int move[] )
       printf( "Player %c wins (timeout)\n", sb[!player]);
     }
   }
+  printf( "\n" );
 }
 
 /*********************************************************//*
