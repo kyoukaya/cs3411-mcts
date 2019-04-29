@@ -88,6 +88,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs, double *confidence
     free(state);
     // return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
+    double conf = highestNode->wins / highestNode->visits;
     if (verbose) {
         gettimeofday(&curtime, NULL);
         uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
@@ -98,9 +99,9 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs, double *confidence
         fprintf(stderr, "\n");
         fprintf(stderr, "Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n", highestNode->move,
                highestNode->wins, highestNode->visits,
-               highestNode->wins / highestNode->visits, i);
+               conf, i);
     }
-    *confidence = highestNode->wins / highestNode->visits;
+    *confidence = conf;
     int ourMove = highestNode->move;
     freeTree(root);
     return ourMove;
