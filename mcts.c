@@ -90,7 +90,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     Node *highestNode = mostVisitedChild(root);
     if (verbose) {
         printf("T:%d ", moveNo);
-        for (int n; n < SUBBOARD_SIZE && root->children[n] != NULL; n++) {
+        for (int n = 0; n < SUBBOARD_SIZE && root->children[n] != NULL; n++) {
             fprintf(stderr, "%.2lf ",root->children[n]->wins / root->children[n]->visits);
         }
         fprintf(stderr, "\n");
