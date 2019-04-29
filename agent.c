@@ -47,7 +47,6 @@ uint32_t totalMs = 0;
 int firstMove[2];
 int verbose = FALSE;
 uint32_t targetTurnTime = FAST_TARGET_TURN_TIME;
-double confidence;
 
 /*********************************************************/ /*
     Print usage information and exit
@@ -119,8 +118,7 @@ int agent_second_move(int board_num, int prev_move) {
 
     gettimeofday(&start, NULL);
     double local_conf;
-    int ourMove;
-    confidence = run_mcts(state, prev_move, FIRST_TURN_TIME, &ourMove);
+    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
@@ -149,8 +147,7 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
     firstMove[1] = first_move + 1;
 
     gettimeofday(&start, NULL);
-    int ourMove;
-    confidence = run_mcts(state, prev_move, FIRST_TURN_TIME, &ourMove);
+    int ourMove = run_mcts(state, prev_move, FIRST_TURN_TIME);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
@@ -178,14 +175,8 @@ int agent_next_move(int prev_move) {
         targetTurnTime = MAX_TARGET_TURN_TIME;
     }
 
-    // If we're quite sure that we're going to lose/win...
-    if (confidence > 0.8 || confidence < 0.3) {
-        targetTurnTime = END_GAME_TURN_TIME;
-    }
-
     gettimeofday(&start, NULL);
-    int ourMove;
-    confidence = run_mcts(state, prev_move, targetTurnTime, &ourMove);
+    int ourMove = run_mcts(state, prev_move, targetTurnTime);
     gettimeofday(&fin, NULL);
 
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +

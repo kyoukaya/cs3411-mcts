@@ -74,7 +74,8 @@ typedef struct _mctsNode {
     uint32_t visits;
 } Node;
 
-double run_mcts(State *rootState, Move lastMove, uint32_t maxMs, int *ourMove);
+// Returns move
+int run_mcts(State *rootState, Move lastMove, uint32_t maxMs);
 
 Node *newNode(State *state, Move move, Node *parent);
 // Use the UCB1 formula to select a child node.

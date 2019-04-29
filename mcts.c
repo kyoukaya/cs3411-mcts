@@ -16,6 +16,7 @@ static int isGameWon(uint32_t board, uint32_t p);
 void whiteBoxTests(void);
 
 double ucb_const;
+double confidence = 0.5;
 
 static void freeTree(Node *node) {
     for (int i = 0; i < SUBBOARD_SIZE && node->children[i] != NULL; i++) {
@@ -39,10 +40,16 @@ static Node *mostVisitedChild(Node *node) {
     return highestNode;
 }
 
-double run_mcts(State *rootState, Move lastMove, uint32_t maxMs, int *ourMove) {
+int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     uint32_t i;
     Node *root = newNode(rootState, lastMove, NULL);
     State *state = calloc(1, sizeof(State));
+
+    // If we're quite sure that we're going to lose/win...
+    if (confidence > 0.8 || confidence < 0.3) {
+        maxMs = END_GAME_TURN_TIME;
+    }
+
     struct timeval start, curtime;
     gettimeofday(&start, NULL);
 
@@ -88,7 +95,7 @@ double run_mcts(State *rootState, Move lastMove, uint32_t maxMs, int *ourMove) {
     free(state);
     // return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
-    double conf = highestNode->wins / highestNode->visits;
+    confidence = highestNode->wins / highestNode->visits;
     if (verbose) {
         gettimeofday(&curtime, NULL);
         uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
@@ -99,11 +106,11 @@ double run_mcts(State *rootState, Move lastMove, uint32_t maxMs, int *ourMove) {
         fprintf(stderr, "\n");
         fprintf(stderr, "Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n", highestNode->move,
                highestNode->wins, highestNode->visits,
-               conf, i);
+               confidence, i);
     }
-    *ourMove = highestNode->move;
+    int ourMove = highestNode->move;
     freeTree(root);
-    return conf;
+    return ourMove;
 }
 
 State *initState(int board, int prev_move, int first_move) {
