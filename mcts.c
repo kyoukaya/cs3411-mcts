@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
 
 #include "mcts.h"
 #include "game.h"
@@ -38,12 +39,22 @@ static Node *mostVisitedChild(Node *node) {
     return highestNode;
 }
 
-int run_mcts(State *rootState, Move lastMove, uint32_t maxIter) {
+int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     uint32_t i;
     Node *root = newNode(rootState, lastMove, NULL);
     State *state = calloc(1, sizeof(State));
+    struct timeval start, curtime;
+    gettimeofday(&start, NULL);
 
-    for (i = 0; i < maxIter; i++) {
+    for (i = 1; i < MAXITER; i++) {
+        // Do a time check every 25000 iterations
+        if ((i % 25000) == 0) {
+            gettimeofday(&curtime, NULL);
+            uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
+            if (curMs > maxMs) {
+                break;
+            }
+        }
         Node *node = root;
         // Restore original state on each iteration.
         memcpy(state, rootState, sizeof(State));

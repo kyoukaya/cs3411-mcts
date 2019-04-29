@@ -10,7 +10,6 @@
 #define UCB_CIRCLE12 0.632455
 #define UCB_CIRCLE5 1.09545
 
-
 // Amount of iterations use to run the first turn, mostly used for benchmarking as
 // it's highly unlikely for a good strategy to emerge in the early game.
 #define INITIAL_ITER 1000000
