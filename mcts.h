@@ -26,22 +26,21 @@
 #define GAME_DRAWN 0.5
 
 // Scary bit constants below
-#define CROSS_PLAYER_START 512u
-#define CIRCLE_PLAYER_START 1u
-#define ALL_CIRCLES_MASK 511u
-// 511 << 9
-#define ALL_CROSSES_MASK 261632u
+#define CROSS_PLAYER_START 0x00000200
+#define CIRCLE_PLAYER_START 0x00000001
+#define ALL_CIRCLES_MASK 0x000001ff
+// 0x1ff << 9
+#define ALL_CROSSES_MASK 0x0003fe00
 // wtf
-#define ROW0 7u
-#define ROW1 56u
-#define ROW2 448u
-#define COL0 73u
-#define COL1 146u
-#define COL2 292u
-#define DIA0 273u
-#define DIA1 84u
+#define ROW0 0x00000007
+#define ROW1 0x00000038
+#define ROW2 0x000001c0
+#define COL0 0x00000049
+#define COL1 0x00000092
+#define COL2 0x00000124
+#define DIA0 0x00000111
+#define DIA1 0x00000054
 
-// Unsigned char
 typedef uint8_t Move;
 
 // Game state.
