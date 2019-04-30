@@ -173,6 +173,8 @@ int agent_next_move(int prev_move) {
     // Take longer turn times during the mid-late game.
     if (moveNo > 9) {
         targetTurnTime = MAX_TARGET_TURN_TIME;
+    } else if (moveNo > 31) {
+        targetTurnTime = END_GAME_TURN_TIME;
     }
 
     gettimeofday(&start, NULL);
