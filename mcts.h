@@ -5,7 +5,7 @@
 
 // In the late game, we cap the iterations so we don't spin for too long as the
 // game is pretty much decided at this point.
-#define MAXITER 100000
+#define MAXITER 2000000
 
 // Time controls in ms.
 // Maximum turn time, used in the mid-game.
