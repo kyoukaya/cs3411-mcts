@@ -13,29 +13,30 @@
 #define FALSE 0
 
 static Node *newNode(State *state, Move move, Node *parent);
-// Update this node - one additional visit and result additional wins. result
-// must be from the viewpoint of playerJustmoved.
+/* Update this node - one additional visit and result additional wins. result
+ * must be from the viewpoint of playerJustmoved. */
 static void nodeUpdate(Node *node, double result);
-// Use the UCB1 formula to select a child node.
-// ref: https://homes.di.unimi.it/~cesabian/Pubblicazioni/ml-02.pdf
-// We use the UCB1-tuned algorithm linked above but with min{1/4,Vj(nj)} simplified
-// to 1/4.
+/* Use the UCB1 formula to select a child node.
+ * ref: https://homes.di.unimi.it/~cesabian/Pubblicazioni/ml-02.pdf
+ * We use the UCB1-tuned algorithm linked above but with min{1/4,Vj(nj)}
+ * simplified to 1/4.*/
 static Node *nodeSelectChild(Node *node);
-// Remove m from untriedMoves and add a new child node for this move. Return the
-// added child node
+/* Remove m from untriedMoves and add a new child node for this move. Return the
+ * added child node */
 static Node *nodeAddChild(Node *node, Move move, State *state);
 
 static uint32_t isBoardFull(uint32_t board);
 static uint32_t isGameWon(uint32_t board, uint32_t p);
-static void stateGetMoves(State *state, Move moves[BOARD_SIZE], uint32_t *numMoves);
+static void stateGetMoves(State *state, Move moves[BOARD_SIZE],
+                          uint32_t *numMoves);
 static void statePlayout(State *state);
 static double stateResult(State *state, int player, int prevBoard);
 
 double ucb_const;
 double confidence = 0.5;
 
-// Could possibly free the tree during the opponent's turn to save a small amount
-// of time.
+/* Could possibly free the tree during the opponent's turn to save a small
+ * amount of time.*/
 static void freeTree(Node *node) {
     for (int i = 0; i < BOARD_SIZE && node->children[i] != NULL; i++) {
         freeTree(node->children[i]);
@@ -71,12 +72,12 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     struct timeval start, curtime;
     gettimeofday(&start, NULL);
 
-    // Start from 1 so we dont immediately do a time check.
-    for (i = 1u; i < MAXITER; i++) {
+    for (i = 0; i < MAXITER; i++) {
         // Do a time check every 25000 iterations.
         if ((i % 25000u) == 0) {
             gettimeofday(&curtime, NULL);
-            uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
+            uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 +
+                             (curtime.tv_usec - start.tv_usec) / 1000;
             if (curMs > maxMs) {
                 break;
             }
@@ -93,7 +94,8 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
 
         // Expand
         if (state->gameStatus == GAME_NOT_TERMINAL) {
-            Move move = node->untriedMoves[(uint32_t)rand() % node->nUntriedMoves];
+            Move move =
+                node->untriedMoves[(uint32_t)rand() % node->nUntriedMoves];
             stateDoMove(state, move);
             node = nodeAddChild(node, move, state);
         }
@@ -115,18 +117,22 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     // Return the move that was most visited.
     Node *highestNode = mostVisitedChild(root);
     confidence = highestNode->wins / highestNode->visits;
+
     if (verbose) {
         gettimeofday(&curtime, NULL);
-        uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
+        uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 +
+                         (curtime.tv_usec - start.tv_usec) / 1000;
         fprintf(stderr, "[%u]T:%d ", curMs, moveNo);
         for (int n = 0; n < BOARD_SIZE && root->children[n] != NULL; n++) {
-            fprintf(stderr, "%.2lf ",root->children[n]->wins / root->children[n]->visits);
+            fprintf(stderr, "%.2lf ",
+                    root->children[n]->wins / root->children[n]->visits);
         }
         fprintf(stderr, "\n");
-        fprintf(stderr, "Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n", highestNode->move,
-               highestNode->wins, highestNode->visits,
-               confidence, i);
+        fprintf(stderr, "Mv: %d W/V: %.0lf/%u(%.2lf) iters: %d\n",
+                highestNode->move, highestNode->wins, highestNode->visits,
+                confidence, i);
     }
+
     int ourMove = highestNode->move;
     freeTree(root);
     return ourMove;
@@ -155,21 +161,21 @@ State *initState(int board, int prev_move, int first_move) {
 void stateDoMove(State *state, Move move) {
     uint32_t moveMaker = 3u - state->playerLastMoved;
     int prevBoard = state->subBoard;
-    // In this case, the branching resulting from the ternary operation
-    // would likely produce less latency compared to the bitwise arithmetic
-    // approach commented out as IMUL instructions need to be set up and
-    // are as heavy as a branch instruction itself.
+    /* In this case, the branching resulting from the ternary operation would
+     * likely produce less latency compared to the bitwise arithmetic approach
+     * commented out as IMUL instructions need to be set up and are as heavy as
+     * a branch instruction itself.*/
     state->board[state->subBoard] |= moveMaker == CIRCLE_PLAYER
                                          ? CIRCLE_PLAYER_START << move
                                          : CROSS_PLAYER_START << move;
-    // state->board[state->subBoard] |= (CIRCLE_PLAYER_START << 9u * (moveMaker - 1u)) << move;
+    // |= (CIRCLE_PLAYER_START << 9u * (moveMaker- 1u)) << move;
     state->subBoard = move;
     state->playerLastMoved = moveMaker;
     state->gameStatus = stateResult(state, moveMaker, prevBoard);
 }
 
 static void stateGetMoves(State *state, Move moves[BOARD_SIZE],
-                   uint32_t *numMoves) {
+                          uint32_t *numMoves) {
     uint32_t subBoard = state->board[state->subBoard];
     uint32_t mask = CIRCLE_PLAYER_START + CROSS_PLAYER_START;
     int n = 0;
@@ -203,8 +209,9 @@ static uint32_t isBoardFull(uint32_t board) {
 
 // EVIL BIT LEVEL OPTIMIZATION BUT WORSE.
 static uint32_t isGameWon(uint32_t board, uint32_t p) {
-    // Alternatively a tree like approach to this, checking squares 0,4,8,
-    // could be more efficient as the worst case branching would be lesser.
+    /* Could alternatively use a tree like approach to this, checking squares
+     * 0, 4, 8, could be more efficient as the worst case branching would be
+     * better.*/
     --p;
     board = board >> (9u * p);
     return ((board & ROW0) == ROW0 || (board & ROW1) == ROW1 ||
@@ -220,13 +227,15 @@ static void nodeUpdate(Node *node, double result) {
 
 static Node *newNode(State *state, Move move, Node *parent) {
     Node *node = calloc(1, sizeof(Node));
-    node->playerLastMoved = state->playerLastMoved;
-    node->move = move;
     node->parent = parent;
+    node->move = move;
+    node->playerLastMoved = state->playerLastMoved;
+    // node->children guaranteed NULL'd by calloc
+    // stateGetMoves initializes node->untriedMoves and node->nUntriedMoves.
+    stateGetMoves(state, node->untriedMoves, &node->nUntriedMoves);
     node->wins = 0.0;
     node->visits = 0;
 
-    stateGetMoves(state, node->untriedMoves, &node->nUntriedMoves);
     return node;
 }
 
@@ -248,6 +257,7 @@ static Node *nodeSelectChild(Node *node) {
     Node *bestChild = NULL;
     double curUCT;
     double bestUCT = -INFINITY;
+    // 0.25 is the constant we've picked to replace min{1/4,Vj(nj)}.
     double x = 0.25 * log((double)node->visits);
 
     for (int i = 0; node->children[i] != NULL && i < BOARD_SIZE; i++) {
@@ -265,7 +275,7 @@ static Node *nodeSelectChild(Node *node) {
 
 static Node *nodeAddChild(Node *parent, Move move, State *state) {
     Node *childNode = newNode(state, move, parent);
-    // Remove move from parent's untriedMoves
+    // Remove move from parent's untriedMoves.
     uint32_t i;
     for (i = 0; i < parent->nUntriedMoves; i++) {
         if (parent->untriedMoves[i] == move) {
@@ -277,7 +287,7 @@ static Node *nodeAddChild(Node *parent, Move move, State *state) {
         };
     }
     parent->nUntriedMoves--;
-    // Add child into parent node.
+    // Find an empty slot and add child into parent node.
     for (i = 0; i < BOARD_SIZE; i++) {
         if (parent->children[i] == NULL) {
             parent->children[i] = childNode;

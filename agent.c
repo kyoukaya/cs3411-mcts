@@ -7,24 +7,26 @@
 
 /* Player code written by Bryan Chew (Z5180123)
  * Uses a Monte Carlo Tree Search to select its next move.
- * 
- * I'd decided to use a MCTS based approach to game playing as I'd tried but failed in
- * COMP1511 and wanted another go at it, I was also not confident in my domain knowledge
- * of this version of Tic Tac Toe and didn't think I'd be able to come up with a decent
- * position evaluator.
- * 
- * Naturally since MCTS is incredibly computationally reliant, I'd decided to write it
- * in C to best optimize the code I can. Additionally using gprof to profile and optimize
- * the hot code paths, namely; isBoardFull, isGameWon. Ultimately using low level
- * bitwise optimizations to get the speed required.
- * 
- * With some testing with the help of a python script, I'd come to realize that the MCTS
- * isn't able to reliably come up with good moves in the early game, and that lookt, the
- * primary means of comparison, plays fairly fast in the first few turns as well.
- * 
- * Testing against lookt -d 16 on my PC nets my AI a 55% win-rate within time constraints!
- * Win-rate will probably be lower on CSE servers due to lower CPU speed as I'm only getting
- * 1.5-1.7M iterations in the midgame compared to 2M on my own PC.
+ *
+ * I'd decided to use a MCTS based approach to game playing as I'd tried but
+ * failed in COMP1511 and wanted another go at it, I was also not confident in
+ * my domain knowledge of this version of Tic Tac Toe and didn't think I'd be
+ * able to come up with a decent position evaluator.
+ *
+ * Naturally since MCTS is incredibly computationally reliant, I'd decided to
+ * write it in C to best optimize the code I can. Additionally using gprof to
+ * profile and optimize the hot code paths, namely; isBoardFull, isGameWon.
+ * Ultimately using low level bitwise optimizations to get the speed required.
+ *
+ * With some testing with the help of a python script, I'd come to realize that
+ * the MCTS isn't able to reliably come up with good moves in the early game,
+ * and that lookt, the primary means of comparison, plays fairly fast in the
+ * first few turns as well.
+ *
+ * Testing against lookt -d 16 on my PC nets my AI a 55% win-rate within time
+ * constraints! Win-rate will probably be lower on CSE servers due to lower CPU
+ * speed as I'm only getting 1.5-1.7M iterations in the midgame compared to 2M
+ * on my own PC.
  */
 
 #include <stdio.h>
@@ -101,9 +103,7 @@ void agent_init() {
 /*********************************************************/ /*
     Called at the beginning of each game
  */
-void agent_start(int this_player) {
-    (void)this_player;
-}
+void agent_start(int this_player) { (void)this_player; }
 
 /*********************************************************/ /*
     Choose second move and return it
@@ -113,7 +113,6 @@ int agent_second_move(int board_num, int prev_move) {
     moveNo = 2;
     firstMove[0] = board_num;
     firstMove[1] = prev_move;
-
 
     // Internal state is represented starting from index 0.
     --board_num;
@@ -127,7 +126,7 @@ int agent_second_move(int board_num, int prev_move) {
     uint32_t move_msec = move_msec = 1 + (fin.tv_sec - start.tv_sec) * 1000 +
                                      (fin.tv_usec - start.tv_usec) / 1000;
     totalMs += move_msec;
-    
+
     stateDoMove(state, ourMove);
     // Convert the move back into index 1
     return ourMove + 1;
@@ -141,7 +140,6 @@ int agent_third_move(int board_num, int first_move, int prev_move) {
     moveNo = 3;
     firstMove[0] = board_num;
     firstMove[1] = first_move;
-
 
     // Internal state is represented starting from index 0.
     --board_num;
@@ -201,16 +199,14 @@ void agent_last_move(int prev_move) {
 /*********************************************************/ /*
     Called after each game
  */
-void agent_gameover(int result,                             // WIN, LOSS or DRAW
-                    int cause  // TRIPLE, ILLEGAL_MOVE, TIMEOUT or FULL_BOARD
-) {
-    const char resultMap[3] = {'W', 'L', 'D'}; 
+void agent_gameover(int result, int cause) {
+    const char resultMap[3] = {'W', 'L', 'D'};
     const char meMap[2] = {'O', 'X'};
 
     // result,me,firstmove,turns,time
-    printf("%c,%c,%d.%d,%d,%u\n",
-           resultMap[result - WIN], meMap[state->me - CIRCLE_PLAYER],
-           firstMove[0], firstMove[1], moveNo, totalMs);
+    printf("%c,%c,%d.%d,%d,%u\n", resultMap[result - WIN],
+           meMap[state->me - CIRCLE_PLAYER], firstMove[0], firstMove[1], moveNo,
+           totalMs);
     free(state);
     (void)cause;
 }

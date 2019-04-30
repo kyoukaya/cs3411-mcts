@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-// In the late game, we cap the iterations so we don't spin for too long as the game is
-// pretty much decided at this point.
+// In the late game, we cap the iterations so we don't spin for too long as the
+// game is pretty much decided at this point.
 #define MAXITER 2000000
 
 // Time controls in ms.
@@ -54,8 +54,8 @@ typedef struct state {
     int playerLastMoved;
     // Which sub-board the game is currently on.
     int subBoard;
-    /* Each subboard is divided into 2 9 bit sections
-     * Starting with the least 9 bits for Circle and then the nex 9 for Cross. */
+    /* Each subboard is divided into 2 9 bit sections. Starting with the least 9
+     * bits for Circle and then the nex 9 for Cross. */
     uint32_t board[BOARD_SIZE];
 } State;
 
