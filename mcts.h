@@ -14,7 +14,7 @@
 #define FIRST_TURN_TIME 1000
 #define FAST_TARGET_TURN_TIME 2000
 // Victory or defeat should be obvious at this point.
-#define END_GAME_TURN_TIME 1500
+#define END_GAME_TURN_TIME 1750
 
 #define EMPTY_SQUARE 0
 #define CIRCLE_PLAYER 1
