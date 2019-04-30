@@ -8,25 +8,24 @@
 /* Player code written by Bryan Chew (Z5180123)
  * Uses a Monte Carlo Tree Search to select its next move.
  *
- * I'd decided to use a MCTS based approach to game playing as I'd tried but
- * failed in COMP1511 and wanted another go at it, I was also not confident in
+ * I'd decided to use a MCTS based approach to game playing as I'd tried, but
+ * failed, in COMP1511 and wanted another go at it, I was also not confident in
  * my domain knowledge of this version of Tic Tac Toe and didn't think I'd be
- * able to come up with a decent position evaluator.
- *
- * Naturally since MCTS is incredibly computationally reliant, I'd decided to
- * write it in C to best optimize the code I can. Additionally using gprof to
- * profile and optimize the hot code paths, namely; isBoardFull, isGameWon.
- * Ultimately using low level bitwise optimizations to get the speed required.
+ * able to come up with a decent position evaluator. Naturally since MCTS is
+ * incredibly computationally reliant, I'd decided to write it in C to best
+ * optimize the code I can. 
  *
  * With some testing with the help of a python script, I'd come to realize that
  * the MCTS isn't able to reliably come up with good moves in the early game,
  * and that lookt, the primary means of comparison, plays fairly fast in the
- * first few turns as well.
+ * first few turns as well. With empirical results from testing on CSE servers,
+ * more time was given to mid-game turns and lesser to early/end-game turns.
  *
  * Testing against lookt -d 16 on my PC nets my AI a 55% win-rate within time
  * constraints! Win-rate will probably be lower on CSE servers due to lower CPU
  * speed as I'm only getting 1.5-1.7M iterations in the midgame compared to 2M
- * on my own PC.
+ * on my own PC. Higher depths of lookt would timeout on CSE so no effort was made
+ * to test against them.
  */
 
 #include <stdio.h>
