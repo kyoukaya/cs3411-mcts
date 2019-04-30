@@ -4,7 +4,7 @@
 #  Alan Blair, CSE, UNSW
 
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -O5 -g
+CFLAGS = -Wall -Wextra -pedantic -O5
 
 default: agent
 
@@ -20,4 +20,4 @@ all: servt agent
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f servt randt agent *.o
+	rm -f servt agent *.o
