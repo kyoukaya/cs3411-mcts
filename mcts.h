@@ -21,8 +21,8 @@
 #define CROSS_PLAYER 2
 #define BOARD_SIZE 9
 #define GAME_NOT_TERMINAL -1.0
-#define GAME_LOST 0
-#define GAME_WON 1
+#define GAME_LOST 0.0
+#define GAME_WON 1.0
 #define GAME_DRAWN 0.5
 
 // Scary bit constants below
