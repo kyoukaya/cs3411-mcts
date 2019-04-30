@@ -12,8 +12,24 @@
 #define TRUE 1
 #define FALSE 0
 
-static int isGameWon(uint32_t board, uint32_t p);
-void whiteBoxTests(void);
+static Node *newNode(State *state, Move move, Node *parent);
+// Update this node - one additional visit and result additional wins. result
+// must be from the viewpoint of playerJustmoved.
+static void nodeUpdate(Node *node, double result);
+// Use the UCB1 formula to select a child node.
+// ref: https://homes.di.unimi.it/~cesabian/Pubblicazioni/ml-02.pdf
+// We use the UCB1-tuned algorithm linked above but with min{1/4,Vj(nj)} simplified
+// to 1/4.
+static Node *nodeSelectChild(Node *node);
+// Remove m from untriedMoves and add a new child node for this move. Return the
+// added child node
+static Node *nodeAddChild(Node *node, Move move, State *state);
+
+static uint32_t isBoardFull(uint32_t board);
+static uint32_t isGameWon(uint32_t board, uint32_t p);
+static void stateGetMoves(State *state, Move moves[BOARD_SIZE], uint32_t *numMoves);
+static void statePlayout(State *state);
+static double stateResult(State *state, int player, int prevBoard);
 
 double ucb_const;
 double confidence = 0.5;
@@ -56,9 +72,9 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
     gettimeofday(&start, NULL);
 
     // Start from 1 so we dont immediately do a time check.
-    for (i = 1; i < MAXITER; i++) {
+    for (i = 1u; i < MAXITER; i++) {
         // Do a time check every 25000 iterations.
-        if ((i % 25000) == 0) {
+        if ((i % 25000u) == 0) {
             gettimeofday(&curtime, NULL);
             uint32_t curMs = (curtime.tv_sec - start.tv_sec) * 1000 + (curtime.tv_usec - start.tv_usec) / 1000;
             if (curMs > maxMs) {
@@ -77,7 +93,7 @@ int run_mcts(State *rootState, Move lastMove, uint32_t maxMs) {
 
         // Expand
         if (state->gameStatus == GAME_NOT_TERMINAL) {
-            Move move = node->untriedMoves[rand() % node->nUntriedMoves];
+            Move move = node->untriedMoves[(uint32_t)rand() % node->nUntriedMoves];
             stateDoMove(state, move);
             node = nodeAddChild(node, move, state);
         }
@@ -137,18 +153,22 @@ State *initState(int board, int prev_move, int first_move) {
 }
 
 void stateDoMove(State *state, Move move) {
-    uint32_t moveMaker = 3 - state->playerLastMoved;
+    uint32_t moveMaker = 3u - state->playerLastMoved;
     int prevBoard = state->subBoard;
-    // state->board[state->subBoard] |= moveMaker == CIRCLE_PLAYER
-    //                                      ? CIRCLE_PLAYER_START << move
-    //                                      : CROSS_PLAYER_START << move;
-    state->board[state->subBoard] |= (CIRCLE_PLAYER_START << 9 * (moveMaker - 1)) << move;
+    // In this case, the branching resulting from the ternary operation
+    // would likely produce less latency compared to the bitwise arithmetic
+    // approach commented out as IMUL instructions need to be set up and
+    // are as heavy as a branch instruction itself.
+    state->board[state->subBoard] |= moveMaker == CIRCLE_PLAYER
+                                         ? CIRCLE_PLAYER_START << move
+                                         : CROSS_PLAYER_START << move;
+    // state->board[state->subBoard] |= (CIRCLE_PLAYER_START << 9u * (moveMaker - 1u)) << move;
     state->subBoard = move;
     state->playerLastMoved = moveMaker;
     state->gameStatus = stateResult(state, moveMaker, prevBoard);
 }
 
-void stateGetMoves(State *state, Move moves[BOARD_SIZE],
+static void stateGetMoves(State *state, Move moves[BOARD_SIZE],
                    uint32_t *numMoves) {
     uint32_t subBoard = state->board[state->subBoard];
     uint32_t mask = CIRCLE_PLAYER_START + CROSS_PLAYER_START;
@@ -164,36 +184,53 @@ void stateGetMoves(State *state, Move moves[BOARD_SIZE],
     *numMoves = n;
 }
 
-void statePlayout(State *state) {
+static void statePlayout(State *state) {
     uint32_t nMoves;
     Move moves[BOARD_SIZE];
     while (state->gameStatus == GAME_NOT_TERMINAL) {
         stateGetMoves(state, moves, &nMoves);
-        stateDoMove(state, moves[rand() % nMoves]);
+        stateDoMove(state, moves[(uint32_t)rand() % nMoves]);
     }
 }
 
 // EVIL BIT LEVEL OPTIMIZATION.
-static int isBoardFull(uint32_t board) {
+static uint32_t isBoardFull(uint32_t board) {
     // Optimize for as little branching as possible.
     uint32_t circles = board & ALL_CIRCLES_MASK;
-    uint32_t crosses = (board & ALL_CROSSES_MASK) >> 9;
+    uint32_t crosses = (board & ALL_CROSSES_MASK) >> 9u;
     return (circles | crosses) == ALL_CIRCLES_MASK;
 }
 
 // EVIL BIT LEVEL OPTIMIZATION BUT WORSE.
-static int isGameWon(uint32_t board, uint32_t p) {
+static uint32_t isGameWon(uint32_t board, uint32_t p) {
     // Alternatively a tree like approach to this, checking squares 0,4,8,
     // could be more efficient as the worst case branching would be lesser.
     --p;
-    board = board >> (9 * p);
+    board = board >> (9u * p);
     return ((board & ROW0) == ROW0 || (board & ROW1) == ROW1 ||
             (board & ROW2) == ROW2 || (board & COL0) == COL0 ||
             (board & COL1) == COL1 || (board & COL2) == COL2 ||
             (board & DIA0) == DIA0 || (board & DIA1) == DIA1);
 }
 
-double stateResult(State *state, int player, int prevBoard) {
+static void nodeUpdate(Node *node, double result) {
+    node->visits++;
+    node->wins += result;
+}
+
+static Node *newNode(State *state, Move move, Node *parent) {
+    Node *node = calloc(1, sizeof(Node));
+    node->playerLastMoved = state->playerLastMoved;
+    node->move = move;
+    node->parent = parent;
+    node->wins = 0.0;
+    node->visits = 0;
+
+    stateGetMoves(state, node->untriedMoves, &node->nUntriedMoves);
+    return node;
+}
+
+static double stateResult(State *state, int player, int prevBoard) {
     uint32_t subBoard = state->board[prevBoard];
 
     if (isBoardFull(subBoard)) {
@@ -207,19 +244,7 @@ double stateResult(State *state, int player, int prevBoard) {
     return GAME_NOT_TERMINAL;
 }
 
-Node *newNode(State *state, Move move, Node *parent) {
-    Node *node = calloc(1, sizeof(Node));
-    node->playerLastMoved = state->playerLastMoved;
-    node->move = move;
-    node->parent = parent;
-    node->wins = 0.0;
-    node->visits = 0;
-
-    stateGetMoves(state, node->untriedMoves, &node->nUntriedMoves);
-    return node;
-}
-
-Node *nodeSelectChild(Node *node) {
+static Node *nodeSelectChild(Node *node) {
     Node *bestChild = NULL;
     double curUCT;
     double bestUCT = -INFINITY;
@@ -238,7 +263,7 @@ Node *nodeSelectChild(Node *node) {
     return bestChild;
 }
 
-Node *nodeAddChild(Node *parent, Move move, State *state) {
+static Node *nodeAddChild(Node *parent, Move move, State *state) {
     Node *childNode = newNode(state, move, parent);
     // Remove move from parent's untriedMoves
     uint32_t i;
@@ -260,11 +285,6 @@ Node *nodeAddChild(Node *parent, Move move, State *state) {
         }
     }
     return childNode;
-}
-
-void nodeUpdate(Node *node, double result) {
-    node->visits++;
-    node->wins += result;
 }
 
 void printBoard(State *state) {

@@ -26,20 +26,20 @@
 #define GAME_DRAWN 0.5
 
 // Scary bit constants below
-#define CROSS_PLAYER_START 512
-#define CIRCLE_PLAYER_START 1
-#define ALL_CIRCLES_MASK 511
+#define CROSS_PLAYER_START 512u
+#define CIRCLE_PLAYER_START 1u
+#define ALL_CIRCLES_MASK 511u
 // 511 << 9
-#define ALL_CROSSES_MASK 261632
+#define ALL_CROSSES_MASK 261632u
 // wtf
-#define ROW0 7
-#define ROW1 56
-#define ROW2 448
-#define COL0 73
-#define COL1 146
-#define COL2 292
-#define DIA0 273
-#define DIA1 84
+#define ROW0 7u
+#define ROW1 56u
+#define ROW2 448u
+#define COL0 73u
+#define COL1 146u
+#define COL2 292u
+#define DIA0 273u
+#define DIA1 84u
 
 // Unsigned char
 typedef uint8_t Move;
@@ -76,26 +76,11 @@ typedef struct _mctsNode {
 // Returns move [0..8]
 int run_mcts(State *rootState, Move lastMove, uint32_t maxMs);
 
-Node *newNode(State *state, Move move, Node *parent);
-// Use the UCB1 formula to select a child node.
-// https://homes.di.unimi.it/~cesabian/Pubblicazioni/ml-02.pdf
-// We use the UCB1-tuned algorithm linked above but with min{1/4,Vj(nj)} simplified
-// to 1/4.
-Node *nodeSelectChild(Node *node);
-// Remove m from untriedMoves and add a new child node for this move. Return the
-// added child node
-Node *nodeAddChild(Node *node, Move move, State *state);
-// Update this node - one additional visit and result additional wins. result
-// must be from the viewpoint of playerJustmoved.
-void nodeUpdate(Node *node, double result);
-
 State *initState(int board, int prev_move, int first_move);
 void stateDoMove(State *state, Move move);
-void stateGetMoves(State *state, Move moves[BOARD_SIZE], uint32_t *numMoves);
-void statePlayout(State *state);
-double stateResult(State *state, int player, int prevBoard);
 
 // Hacky adapter to provided print_board function.
 void printBoard(State *state);
+void whiteBoxTests(void);
 
 #endif
